@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Book Details</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+</head>
+<body>
+  <div id="bookDetails">
+    <h1>Book Details</h1>
+    <p><strong>Title:</strong> {{ book_details.title }}</p>
+    <p><strong>ID:</strong> {{ book_details.id }}</p>
+    <p><strong>ISBN:</strong> {{ book_details.isbn }}</p>
+    <p><strong>Author:</strong> {{ book_details.author }}</p>
+    <p><strong>Section ID:</strong> {{ book_details.section_id }}</p>
+    <p><strong>Publication Year:</strong> {{ book_details.publication_year }}</p>
+    <p><strong>Rating:</strong> {{ book_details.rating }}</p>
+    <p><strong>Volume:</strong> {{ book_details.volume }}</p>
+    <p><strong>Pages:</strong> {{ book_details.pages }}</p>
+    <button @click="updateBook">Update</button>
+    <button @click="deleteBook">Delete</button>
+    <button @click="readBook">See Book</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    new Vue({
+      el: '#bookDetails',
+      data: {
+        book_details: {}
+      },
+      mounted() {
+        // Get the book ID from the URL parameter
+        var params = new URLSearchParams(window.location.search);
+        var bookId = params.get('id');
+        
+        // Fetch book details based on book ID
+        fetch("/" + bookId + "/books")
+          .then(response => response.json())
+          .then(data => {
+            this.book_details = data.book_details;
+          })
+          .catch(error => console.error('Error fetching book details:', error));
+      },
+      methods: {
+        updateBook() {
+          // Redirect to update page passing book ID as parameter
+          var params = new URLSearchParams(window.location.search);
+          var bookId = params.get('id');
+          window.location.href = './book_update.html?id=' + bookId
+        },
+        deleteBook() {
+          // Send DELETE request to delete the book
+          var params = new URLSearchParams(window.location.search);
+          var bookId = params.get('id');
+          fetch("/book/" + bookId + "/delete", {
+            method: 'DELETE'
+          })
+          .then(response => {
+            if (response.ok) {
+              // Show success message
+              Swal.fire({
+                icon: 'success',
+                title: 'Successfully deleted',
+              }).then(() => {
+                // Redirect to library page after successful deletion
+                window.location.href = './librarian_home.html';
+              });
+            } else {
+              // Show error message
+              Swal.fire({
+                icon: 'error',
+                title: 'Could not delete',
+                text: 'An error occurred while deleting the book.',
+              });
+              console.error('Error deleting book');
+            }
+          })
+          .catch(error => {
+            // Show error message
+            Swal.fire({
+              icon: 'error',
+              title: 'Could not delete',
+              text: 'An error occurred while deleting the book.',
+            });
+            console.error('Error deleting book:', error);
+          });
+        },
+        readBook(bookId) {
+          var params = new URLSearchParams(window.location.search);
+          var bookId = params.get('id');
+          window.location.href = "./read_book.html?id=" + bookId;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

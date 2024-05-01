@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Orders</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <button onclick="redirectToProfile()">My Profile</button>
+  <script src="https://unpkg.com/vue@2"></script>
+  <link rel="stylesheet" type="text/css" href="./styles.css" />
+
+  <!-- component template -->
+  <script type="text/x-template" id="grid-template">
+    <table>
+      <thead>
+        <tr>
+          <th v-for="key in columns"
+            @click="sortBy(key)"
+            :class="{ active: sortKey == key }">
+            {{ key | capitalize }}
+            <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'">
+            </span>
+          </th>
+          <th>Actions</th> <!-- New column for buttons -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="entry in filteredHeroes">
+          <td v-for="key in columns">
+            {{ entry[key] }}
+          </td>
+          <td>
+            <button @click="readBook(entry.book_id)">Read</button> <!-- Read button -->
+            <button @click="returnBook(entry)">Return</button> <!-- Return button -->
+            <input type="number" min="1" max="10" v-model="entry.rating" placeholder="Rate">
+            <button @click="rateBook(entry,entry.rating)">Rate</button> <!-- Rate button -->
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </script>
+</head>
+<body>
+  <!-- demo root element -->
+  <div id="demo">
+    <form id="search">
+      Search <input name="query" v-model="searchQuery" />
+    </form>
+    <demo-grid
+      :heroes="gridData"
+      :columns="gridColumns"
+      :filter-key="searchQuery"
+    >
+    </demo-grid>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    // register the grid component
+    Vue.component("demo-grid", {
+      template: "#grid-template",
+      props: {
+        heroes: Array,
+        columns: Array,
+        filterKey: String
+      },
+      data: function() {
+        var sortOrders = {};
+        this.columns.forEach(function(key) {
+          sortOrders[key] = 1;
+        });
+        return {
+          sortKey: "",
+          sortOrders: sortOrders
+        };
+      },
+      computed: {
+        filteredHeroes: function() {
+          var sortKey = this.sortKey;
+          var filterKey = this.filterKey && this.filterKey.toLowerCase();
+          var order = this.sortOrders[sortKey] || 1;
+          var heroes = this.heroes;
+          if (filterKey) {
+            heroes = heroes.filter(function(row) {
+              return Object.keys(row).some(function(key) {
+                return (
+                  String(row[key])
+                    .toLowerCase()
+                    .indexOf(filterKey) > -1
+                );
+              });
+            });
+          }
+          if (sortKey) {
+            heroes = heroes.slice().sort(function(a, b) {
+              a = a[sortKey];
+              b = b[sortKey];
+              return (a === b ? 0 : a > b ? 1 : -1) * order;
+            });
+          }
+          return heroes;
+        }
+      },
+      filters: {
+        capitalize: function(str) {
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+      },
+      methods: {
+        sortBy: function(key) {
+          this.sortKey = key;
+          this.sortOrders[key] = this.sortOrders[key] * -1;
+        },
+        readBook: function(bookId) {
+          // Redirect to book details page with the book ID
+          window.location.href = "./read_book.html?id=" + bookId;
+        },
+        returnBook: function(bookInfo) {
+          // Make changes in the database to mark the book as returned
+          fetch("/orderdetails/"+bookInfo.transaction_id+"/"+profile_id+"/update" , {
+            method: "PUT",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              transaction_id: bookInfo.transaction_id,
+              book_id: bookInfo.book_id,
+              member_id: profile_id,
+              return_date: formattedDate,
+              issued_date: bookInfo.issued_date,
+              overdue: bookInfo.overdue,
+              due_date: bookInfo.due_date
+            })
+          })
+          .then(response => {
+            if (response.ok) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Successfully Returned',
+              }).then(() => {
+                window.location.href = './member_profile.html';
+              });
+            } else {
+              Swal.fire({
+              icon: 'error',
+              title: 'Error While Returning. Try Again'
+            })
+            }
+          })
+          .catch(error => {
+            console.error("Error returning book:", error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error While Returning. Try Again'
+            })
+          });
+        },
+        rateBook: function(bookInfo,rating) {
+          // Make changes in the database to mark the book as returned
+          fetch("/bookrate/"+bookInfo.book_id+"/"+bookInfo.transaction_id+"/update" , {
+            method: "PUT",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              "book_id": bookInfo.book_id,
+              "rating":rating
+            })
+          })
+          .then(response => response.json())
+          .then(data=> {
+            if (data.status==="Success") {
+              Swal.fire({
+                icon: 'success',
+                title: 'Successfully Rated',
+              }).then(() => {
+                window.location.href = './member_profile.html';
+              });
+            } else if (data.status === -10) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Book has already been Rated by you on this Purchase',
+              });
+            }else {
+              Swal.fire({
+              icon: 'error',
+              title: 'Error While Rating. Try Again'
+            })
+            }
+          })
+          .catch(error => {
+            console.error("Error rating book:", error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error While Rating. Try Again'
+            })
+          });
+        }
+      }
+    });
+
+    // bootstrap the demo
+    var profile_id = JSON.parse(sessionStorage.getItem("userprofile"))["id"];
+    fetch("/orderdetailsreturned/" + profile_id)
+      .then(async function(response) {
+        data = await response.json();
+        var demo = new Vue({
+          el: "#demo",
+          data: {
+            searchQuery: "",
+            rating:null,
+            gridColumns: ["book_title", "transaction_id", "book_pages","due_date"], // shuffle order
+            gridData: data.order
+          }
+        });
+      });
+
+    function redirectToProfile() {
+      window.location.href = "./member_profile.html";
+    }
+  </script>
+</body>
+</html>

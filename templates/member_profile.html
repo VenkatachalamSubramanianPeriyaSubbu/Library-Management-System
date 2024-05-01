@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" type="text/css" href="./desgin.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #profile-container {
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+        }
+
+        img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="profile-container">
+        <h2>Name: <span id="profile-name"></span></h2>
+        <h2>User Name: <span id="profile-username"></span></h2>
+        <p>Email: <span id="profile-email"></span></p>
+
+
+        <button onclick="redirectToEditProfile()">Edit Profile</button>
+        <button onclick="redirectToLibrary()">Visit Library</button>
+        <button onclick="redirectToOrderList()">See Orders</button>
+        <button onclick="LogoutFn()">Log Out</button>
+    </div>
+
+    <script>
+        // Check if user details are stored in sessionStorage
+        const userProfile = JSON.parse(sessionStorage.getItem("userprofile"));
+
+        if (userProfile) {
+            // Update HTML elements with user details
+            document.getElementById('profile-name').textContent = userProfile.name || 'N/A';
+            document.getElementById('profile-username').textContent = userProfile.username || 'N/A';
+            document.getElementById('profile-email').textContent = userProfile.email || 'N/A';
+        }
+
+        function redirectToEditProfile() {
+            window.location.href = './member_profile_edit.html';
+        }
+        function redirectToLibrary() {
+            window.location.href = './shop.html';
+        }
+        function redirectToOrderList(){
+            window.location.href = './member_order_list.html';
+        }
+        function LogoutFn(){
+            fetch('/logout',{
+                method : "POST"
+            }).then((result) => {
+                  window.location.href = "./login.html";
+                }
+            )
+        }
+    </script>
+
+</body>
+</html>
+

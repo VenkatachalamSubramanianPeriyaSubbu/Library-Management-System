@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Viewer</title>
+    <!-- Include Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        window.onbeforeprint = function() {
+            var pdfObject = document.getElementById("app");
+            if (pdfObject && pdfObject.type === 'application/pdf') {
+                window.alert("Printing disabled for this PDF.");
+                return false; // Cancels the print operation
+            }
+        };
+        </script>
+
+</head>
+<body>
+    <div id="app">
+        <object id="obj" :data="pdfPath" type="application/pdf" width="100%" height="600px" />
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                pdfPath: ''
+            },
+            mounted() {
+                // Fetch the PDF path from Flask route
+                const params = new URLSearchParams(window.location.search);
+                const bookId = params.get('id'); 
+                fetch('/bookfile/'+bookId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.the_book.pdf_path) {
+                            this.pdfPath = "\\templates\\book_files\\"+ data.the_book.pdf_path + '#toolbar=0';
+                        } else {
+                            console.error('PDF file not found');
+                        }
+                    })
+                    .catch(error => console.error('Error fetching PDF path:', error));
+            }
+        });
+    </script>
+</body>
+</html>

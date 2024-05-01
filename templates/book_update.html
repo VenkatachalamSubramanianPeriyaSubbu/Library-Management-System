@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Update Book</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <button onclick="redirectToHome()">Home</button>
+  <button onclick="redirectToAllBooks()">All Books</button>
+</head>
+<body>
+
+<h1>Update Book</h1>
+<div id="app">
+    <form v-on:submit.prevent="updateBook">
+        <label>Title</label>
+        <input type="text" required v-model="bookTitle">
+        <label>Author</label>
+        <input type="text" required v-model="bookAuthor">
+        <label>ISBN</label>
+        <input type="number" required v-model="bookISBN">
+        <label>Section ID</label>
+        <input type="number" required v-model="bookSecID">
+        <label>Publication Year</label>
+        <input type="text" required v-model="bookPublYear">
+        <label>Rating</label>
+        <input type="number" required v-model="bookRating" min="1" max="10">
+        <label>Volume</label>
+        <input type="number" required v-model="bookVolume">
+        <label>Pages</label>
+        <input type="number" required v-model="bookPages">
+        <label>PDF File</label>
+        <input type="file" accept="application/pdf" v-on:change="[handleFileUpload]">
+        <button type="submit">Update Book</button>
+    </form>
+</div>
+
+<script src="https://unpkg.com/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        bookId: null,
+        bookTitle: '',
+        bookAuthor: '',
+        bookISBN: '',
+        bookSecID: '',
+        bookPublYear: '',
+        bookRating: '',
+        bookVolume: '',
+        bookPages: '',
+        pdfFile: null
+      }
+    },
+    mounted() {
+      const params = new URLSearchParams(window.location.search);
+      this.bookId = params.get('id');
+      // Fetch book details using the book ID and set the data properties accordingly
+      // this.fetchBookDetails();
+    },
+    methods: {
+      async updateBook() {
+        try {
+          const response = await fetch(`/book/${this.bookId}/update`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              title: this.bookTitle,
+              author: this.bookAuthor,
+              isbn: this.bookISBN,
+              section_id: this.bookSecID,
+              publication_year: this.bookPublYear,
+              rating: this.bookRating,
+              volume: this.bookVolume,
+              pages: this.bookPages,
+              file_path: this.fileName,
+              pdfFile: this.pdfFile
+            })
+          });
+          if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Successfully Updated',
+              }).then(() => {
+                // Redirect to library page after successful update
+                window.location.href = './librarian_homepage.html';
+              });
+          } else {
+            console.error('Failed to update book');
+            Swal.fire({
+              icon: 'error',
+              title: 'Error While Updating',
+            })
+          }
+        } catch (error) {
+          console.error('Error updating book:', error);
+          Swal.fire({
+            icon: "error",
+            title: "Error while Updating",
+          })
+        }
+      },
+      handleFileUpload(){
+        const selectedFile = event.target.files[0];
+        this.fileName = selectedFile.name;
+        this.ConvertFileToBase64(selectedFile)
+      },
+      ConvertFileToBase64(file){
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          this.pdfFile=reader.result;
+        };
+        reader.onerror =()=> {
+          console.log("Error while convertion");
+        };
+      }
+    }
+  });
+ app.mount('#app');
+
+ function redirectToHome() {
+   window.location.href = "./librarian_homepage.html";
+ }
+ 
+ function redirectToAllBooks(){
+   window.location.href = "./librarian_home.html";
+ }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Books</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <button onclick="redirectToHome()">Home</button>
+  <button onclick="redirectToAllBooks()">All Books</button>
+  <style>
+    form {
+      border: dashed black 1px;
+      width: 200px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Book</h1>
+<div id="app">
+    <form v-on:submit.prevent="addItem">
+        <label>Title</label>
+        <input type="text" required v-model="bookTitle">
+        <label>Author</label>
+        <input type="text" required v-model="bookAuthor">
+        <label>ISBN</label>
+        <input type="number" required v-model="bookISBN">
+        <label>Section ID</label>
+        <input type="number" required v-model="bookSecID">
+        <label>Publication Year</label>
+        <input type="text" required v-model="bookPublYear">
+        <label>Rating</label>
+        <input v-on:keydown="CheckRating" type="number"  required v-model="bookRating" min="1" max="10">
+        <label>Volume</label>
+        <input type="number" required v-model="bookVolume">
+        <label>Pages</label>
+        <input type="number" required v-model="bookPages">
+        <label>PDF File</label>
+        <input type="file" accept="application/pdf" v-on:change="[handleFileUpload]">
+        <button v-on:click="[addItem, saveData]" type="submit">Add Book</button>
+
+    </form>
+
+  <div>
+  </div>
+</div>
+
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        bookTitle: null,
+        bookAuthor: null,
+        bookISBN: null,
+        bookSecID: null,
+        bookPublYear: null, 
+        bookRating: null, 
+        bookVolume: null, 
+        bookPages: null,
+        newbooklist: [
+          { }
+        ]
+      }
+    },
+    methods: {
+      CheckRating(){
+        if (this.bookRating > 10 || this.bookRating < 0){
+          this.bookRating = null;
+        }
+      },
+      addItem(){
+        let book = {
+          title: this.bookTitle,
+          author: this.bookAuthor,
+          isbn: this.bookISBN,
+          section_id: this.bookSecID,
+          publication_year: this.bookPublYear,
+          rating: this.bookRating,
+          volume: this.bookVolume,
+          pages: this.bookPages,
+          file_path: this.fileName,
+          pdfFile: this.pdfFile
+        }
+        this.newbooklist.push(book)
+        this.bookTitle= null
+        this.bookAuthor= null
+        this.bookISBN= null
+        this.bookSecID=  null
+        this.bookPublYear=  null
+        this.bookRating=  null
+        this.bookVolume= null 
+        this.bookPages=null 
+        this.file_path=null
+      },
+      saveData(){
+        let recentBook = this.newbooklist[this.newbooklist.length - 1];
+        fetch('/book/add', {
+          method: "POST", // *GET, POST, PUT, DELETE, etc.
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(recentBook), // body data type must match "Content-Type" header
+        }).then(
+            response =>{
+                console.log(response);
+                Swal.fire({
+                  title: "Added Book!",
+                  text: "The Book has been succesfully added!",
+                  icon: "success",
+
+                }).then((result) => {
+                  window.location.href = "./librarian_home.html"
+                }
+                );
+            }
+            
+        ).catch(error=>{
+            console.log(response);
+        }); 
+      },
+      handleFileUpload(){
+        const selectedFile = event.target.files[0];
+        this.fileName = selectedFile.name;
+        this.ConvertFileToBase64(selectedFile)
+      },
+      ConvertFileToBase64(file){
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          this.pdfFile=reader.result;
+        };
+        reader.onerror =()=> {
+          console.log("Error while convertion");
+        };
+      }
+    }
+  })
+ app.mount('#app')
+ function redirectToHome() {window.location.href = "./librarian_homepage.html";}
+ function redirectToAllBooks(){window.location.href = "./librarian_home.html";}
+</script>
+
+</body>
+</html>

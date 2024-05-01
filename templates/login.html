@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <style>
+    form {
+      border: dashed black 1px;
+      width: 200px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Login</h1>
+<div id="app">
+    <form>
+        <label>Username</label>
+        <input type="text" required v-model="memberUsername">
+        <label>Password</label>
+        <input type="text" required v-model="memberPassword">
+        <button @click="admitUser" type="button">LogIn</button>
+    </form>
+    <button @click="SignInPage" type="button">SignUp</button>
+
+  <div>
+    <p>
+      Welcome back !!!
+    </p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const today = new Date();
+  const formattedDate = today.toISOString().split('T')[0];
+  const app = Vue.createApp({
+    data() {
+      return {
+        memberUsername: null,
+        memberPassword: null
+      }
+    },
+    methods: {
+      admitUser() {
+        let user = {
+          'password': this.memberPassword
+        };
+        fetch('/login/' + this.memberUsername, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(user),
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Login failed');
+              Swal.fire({
+                title: "Wrong Credentials",
+                text: "Check your Credentials and try again",
+                icon: "error",
+              })
+            }
+            return response.json();
+          })
+          .then(jsonResponse => {
+            if (jsonResponse['member']){
+              Swal.fire({
+                title: "Welcome Back!",
+                text: "Hi " + jsonResponse['member']['name'] + " !",
+                icon: "success",
+              })
+              .then(() => {
+                sessionStorage.setItem("userprofile", JSON.stringify(jsonResponse['member']));
+                const memberId = jsonResponse['member']['id'];
+                return fetch(`/member/${memberId}/update`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    id: memberId,
+                    name: jsonResponse['member']['name'],
+                    email: jsonResponse['member']['email'],
+                    phone_number: jsonResponse['member']['phone_number'],
+                    username: jsonResponse['member']['username'],
+                    password: this.memberPassword,
+                    type: jsonResponse['member']['type'],
+                    last_visited: formattedDate
+                  }),
+                });
+              })
+              .then(response => response.json())
+              .then(data => {
+                const userProfile = JSON.parse(sessionStorage.getItem("userprofile"));
+                if (userProfile.type === "General Customer") {
+                  console.log('Status 100: Redirecting to member profile page');
+                  window.location.href = "./member_profile.html";
+                } else if (userProfile.type === 'Librarian') {
+                  console.log('Status 200: Redirecting to librarian homepage');
+                  window.location.href = "./librarian_homepage.html";
+                } else {
+                  console.error('Unexpected status code:', response.status);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Unexpected Error',
+                    text: 'An unexpected error occurred. Please try again later.',
+                  });
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Login Failed',
+                  text: 'An error occurred while trying to login. Please try again later.',
+                });
+              });
+            }
+            else{
+              Swal.fire({
+                title: "Login Failed",
+                text: "Incorrect Credentials",
+                icon: "error",
+              })
+
+            }
+
+            })
+          }, 
+          SignInPage(){
+            window.location.href = "./signup.html";
+          }
+    }
+  });
+
+  app.mount('#app');
+</script>
+
+</body>
+</html>

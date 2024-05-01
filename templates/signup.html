@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign-Up</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <style>
+    form {
+      border: dashed black 1px;
+      width: 200px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Member-Sign In</h1>
+<div id="app">
+    <form v-on:submit.prevent="addUser">
+        <label>Name</label>
+        <input type="text" required v-model="memberName">
+        <label>Email</label>
+        <input type="text" required v-model="memberEmail">
+        <label>Phone Number</label>
+        <input type="number" required v-model="memberPhoneno">
+        <label>Username</label>
+        <input type="text" required v-model="memberUsername">
+        <label>Password</label>
+        <input type="text" required v-model="memberPassword">
+        <label>Re-Enter Password</label>
+        <input type="text" required v-model="memberPasswordRe">
+        <button v-on:click="[addUser, saveData]" type="submit">Add Member</button>
+
+    </form>
+
+  <div>
+    <p>
+      Read a Lot !!!
+    </p>
+  </div>
+</div>
+
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        memberName: null,
+        memberEmail: null,
+        memberPhoneno: null,
+        memberUsername: null,
+        memberPassword: null, 
+        memberPasswordRe: null, 
+        memberType: "General Customer",
+        newmemberlist: [
+          { }
+        ]
+      }
+    },
+    methods: {
+      addUser(){
+        let member = {
+          name: this.memberName,
+          email: this.memberEmail,
+          phone_number: this.memberPhoneno,
+          username: this.memberUsername,
+          password: this.memberPassword,
+          type: this.memberType,
+          last_visited: Date.now()
+        }
+        this.newmemberlist.push(member)
+        this.memberName= null
+        this.memberEmail= null
+        this.memberPhoneno= null
+        this.memberUsername=  null
+        this.memberPassword=  null 
+        this.memberType = "General Customer"
+      },
+      saveData(){
+        let recentMember = this.newmemberlist[this.newmemberlist.length - 1];
+        fetch('/member/add', {
+          method: "POST", // *GET, POST, PUT, DELETE, etc.
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(recentMember), // body data type must match "Content-Type" header
+        }).then(
+            response =>{
+                console.log(response);
+                Swal.fire({
+                  title: "Signed Up",
+                  text: "Login to continue",
+                  icon: "success",
+
+                }).then((result) => {
+                  window.location.href = "./login.html";
+                }
+                );
+            }
+            
+        ).catch(error=>{
+            console.log(response);
+        }); 
+        }
+      }
+    }
+  )
+ app.mount('#app')
+</script>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Librarian Homepage</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <style>
+    body {
+      text-align: center; /* Center align the content */
+    }
+    button {
+      display: block; /* Display buttons as blocks */
+      margin: 10px auto; /* Add margin for spacing and center horizontally */
+    }
+  </style>
+</head>
+<body>
+  <h1>Welcome, Librarian!</h1>
+  <button onclick="redirectToAllBooks()">ALL BOOKS</button>
+  <button onclick="redirectToAllSections()">ALL SECTIONS</button>
+  <button onclick="redirectToAllMembers()">ALL MEMBERS</button>
+  <button onclick="redirectToAllOrders()">ALL ORDERS</button>
+  <button onclick="redirectCreateSection()">CREATE SECTION</button>
+  <button onclick="redirectCreateBook()">ADD BOOK</button>
+  <button onclick="LogoutFn()">LOGOUT</button>
+  
+  
+  <script>
+    function redirectToAllBooks() {
+      window.location.href = "./librarian_home.html";
+    }
+
+    function redirectToAllSections() {
+      window.location.href = "./all_section.html";
+    }
+
+    function redirectToAllMembers() {
+      window.location.href = "./all_members.html";
+    }
+
+    function redirectToAllOrders() {
+      window.location.href = "./all_orders.html";
+    }
+
+    function redirectCreateBook() {
+      window.location.href = "./library_add.html";
+    }
+
+    function redirectCreateSection() {
+      window.location.href = "./create_section.html";
+    }
+    function LogoutFn(){
+            fetch('/logout',{
+                method : "POST"
+            }).then((result) => {
+                  window.location.href = "./login.html";
+                }
+            )
+        }
+  </script>
+</body>
+</html>

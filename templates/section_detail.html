@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Section</title>
+    <link rel="stylesheet" type="text/css" href="./desgin.css">
+</head>
+<body>
+    <button onclick="redirectToHome()">Home</button>
+    <button onclick="redirectToCreateSection()">Create Section</button>
+    <button onclick="redirectToUpdateSection()">Update Section</button>
+    <button onclick="redirectToDeleteSection()">Delete Section</button>
+
+    <div id="demo">
+        <form id="search">
+            Search <input name="query" v-model="searchQuery" />
+        </form>
+        <demo-grid
+            :transactions="gridData"
+            :columns="gridColumns"
+            :filter-key="searchQuery"
+        ></demo-grid>
+    </div>
+
+    <!-- Component template -->
+    <script type="text/x-template" id="grid-template">
+        <table>
+            <thead>
+                <tr>
+                    <th v-for="key in columns"
+                        @click="sortBy(key)"
+                        :class="{ active: sortKey == key }">
+                        {{ key | capitalize }}
+                        <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'">
+                        </span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="entry in filteredTransactions">
+                    <td v-for="key in columns">
+                        <!-- Make section name clickable and redirect to another page -->
+                        <template v-if="key === 'transaction_id'">
+                            <a :href="'./section_details.html?id=' + entry.transaction_id">{{ entry[key] }}</a>
+                        </template>
+                        <template v-else>
+                            {{ entry[key] }}
+                        </template>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </script>
+
+    <!-- Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <!-- SweetAlert2 for nice alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const secId = urlParams.get('id');
+        Vue.component("demo-grid", {
+            template: "#grid-template",
+            props: {
+                transactions: Array,
+                columns: Array,
+                filterKey: String
+            },
+            data: function () {
+                var sortOrders = {};
+                this.columns.forEach(function (key) {
+                    sortOrders[key] = 1;
+                });
+                return {
+                    sortKey: "",
+                    sortOrders: sortOrders
+                };
+            },
+            computed: {
+                filteredTransactions: function () {
+                    var sortKey = this.sortKey;
+                    var filterKey = this.filterKey && this.filterKey.toLowerCase();
+                    var order = this.sortOrders[sortKey] || 1;
+                    var transactions = this.transactions;
+                    if (filterKey) {
+                        transactions = transactions.filter(function (row) {
+                            return Object.keys(row).some(function (key) {
+                                return String(row[key]).toLowerCase().indexOf(filterKey) > -1;
+                            });
+                        });
+                    }
+                    if (sortKey) {
+                        transactions = transactions.slice().sort(function (a, b) {
+                            a = a[sortKey];
+                            b = b[sortKey];
+                            return (a === b ? 0 : a > b ? 1 : -1) * order;
+                        });
+                    }
+                    return transactions;
+                }
+            },
+            filters: {
+                capitalize: function (str) {
+                    return str.charAt(0).toUpperCase() + str.slice(1);
+                }
+            },
+            methods: {
+                sortBy: function (key) {
+                    this.sortKey = key;
+                    this.sortOrders[key] = this.sortOrders[key] * -1;
+                }
+            }
+        });
+
+        function redirectToHome() {
+            window.location.href = "./librarian_homepage.html";
+        }
+
+        function redirectToCreateSection() {
+            window.location.href = "./create_section.html";
+        }
+
+        function redirectToUpdateSection() {
+            // Getting the section ID from the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const secId = urlParams.get('id');
+            // Redirecting to the update section page with the ID
+            window.location.href = "./update_section.html?id=" + secId;
+        }
+
+        function redirectToDeleteSection() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const secId = urlParams.get('id');
+            // Send DELETE request to delete the section
+            fetch("/section/" + secId + "/deletebooks", {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Successfully deleted',
+                        }).then(() => {
+                            // Redirect to library page after successful deletion
+                            window.location.href = './librarian_homepage.html';
+                        });
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Could not delete',
+                            text: 'An error occurred while deleting the section.',
+                        });
+                        console.error('Error deleting section');
+                    }
+                })
+                .catch(error => {
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Could not delete',
+                        text: 'An error occurred while deleting the section.',
+                    });
+                    console.error('Error deleting section:', error);
+                });
+        }
+
+        // Fetch book details
+        fetch("/books/"+secId+"/section")
+            .then(response => response.json())
+            .then(data => {
+                new Vue({
+                    el: "#demo",
+                    data: {
+                        searchQuery: "",
+                        gridColumns: ["title", "id", "isbn", "author","section_id", "publication_year", "rating", "volume", "pages"],
+                        gridData: data.book_details
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching book details:', error);
+            });
+    </script>
+</body>
+</html>
+

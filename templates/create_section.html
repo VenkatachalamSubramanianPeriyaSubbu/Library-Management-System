@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Section</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <button onclick="redirectToHome()">Home</button>
+  <button onclick="redirectToAllSection()">All Sections</button>
+  <style>
+    form {
+      border: dashed black 1px;
+      width: 200px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Create New Section</h1>
+<div id="app">
+    <form>
+        <label>Section-Name</label>
+        <input type="text" required v-model="sectionName">
+        <label>Description</label>
+        <input type="text" required v-model="sectionDescription">
+        <button v-on:click="[createSection]" type="button">Create New Section</button>
+
+    </form>
+
+  <div>
+    <p>
+      Creating Section !!!
+    </p>
+  </div>
+</div>
+
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+const today = new Date();
+const formattedDate = today.toISOString().split('T')[0];
+  const app = Vue.createApp({
+    data() {
+      return {
+        sectionName: null,
+        sectionDescription: null
+      }
+    },
+    methods: {
+      createSection(){
+        fetch('/section/add', {
+          method: "POST", // *GET, POST, PUT, DELETE, etc.
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            "name":this.sectionName,
+            "description":this.sectionDescription,
+            "date_created":formattedDate
+          }), 
+        }).then(response => {
+          response.json().then((jsonResponse) =>{
+                  Swal.fire({
+                  title: "Created Section!",
+                  icon: "success"
+
+                }).then((result) => {
+                  window.location.href = "./librarian_homepage.html";
+
+                }
+                );
+
+                
+            })
+        }).catch(error=>{
+            //console.log(response);
+        }); 
+        }
+    }
+  })
+ app.mount('#app')
+ function redirectToHome() {window.location.href = "./librarian_homepage.html";}
+ function redirectToAllSection(){window.location.href = "./all_section.html";}
+</script>
+
+</body>
+</html>

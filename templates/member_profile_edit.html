@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Profile</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <button onclick="redirectToProfile()">My Profile</button>
+  <style>
+    form {
+      border: dashed black 1px;
+      width: 200px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Edit your Profile</h1>
+<div id="app">
+    <form @submit.prevent="saveData">
+        <label>Name</label>
+        <input type="text" id="name" required v-model="memberName">
+        <label>Email</label>
+        <input type="text" id="email" required v-model="memberEmail">
+        <label>Phone Number</label>
+        <input type="number" id="phonenumber" required v-model="memberPhoneno">
+        <label>Username</label>
+        <input type="text" id="username" required v-model="memberUsername">
+        <label>Password</label>
+        <input type="password" required v-model="memberPassword"> <!-- Use type="password" for password fields -->
+        <label>Re-Enter Password</label>
+        <input type="password" required v-model="memberPasswordRe"> <!-- Use type="password" for password fields -->
+        <button type="submit">Update Profile</button>
+    </form>
+
+  <div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+const today = new Date();
+const formattedDate = today.toISOString().split('T')[0];
+const userProfile = JSON.parse(sessionStorage.getItem("userprofile"));
+
+const app = Vue.createApp({
+  data() {
+    return {
+      memberName: userProfile.name || '',
+      memberEmail: userProfile.email || '',
+      memberPhoneno: userProfile.phone_number || '',
+      memberUsername: userProfile.username || '',
+      memberPassword: '',
+      memberPasswordRe: '',
+    };
+  },
+  methods: {
+    saveData() {
+      let recentMember = {
+        "id" : userProfile.id,
+        "name": this.memberName,
+        "email": this.memberEmail,
+        "phone_number": this.memberPhoneno,
+        "username": this.memberUsername,
+        "password": this.memberPassword,
+        "type": "General Customer",
+        "last_visited": formattedDate
+      };
+      fetch('/member/'+userProfile.id+'/update', {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(recentMember),
+      }).then(response => {
+        console.log(response);
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to update profile');
+        }
+      }).then(data => {
+        console.log(data);
+        Swal.fire({
+          title: "Updates!",
+          text: "Your Profile is updated !!!",
+          icon: "success",
+        }).then(() => {
+          window.location.href = "./member_profile.html";
+        });
+      })
+      .catch(error => {
+        console.error('Error updating profile:', error);
+        window.location.href = "./member_profile_edit.html"
+      });
+    },
+  },
+});
+
+app.mount('#app');
+function redirectToProfile(){
+  window.location.href="./member_profile.html";
+}
+</script>
+
+</body>
+</html>
+
+
+      

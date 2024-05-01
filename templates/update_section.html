@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Section</title>
+  <link rel="stylesheet" type="text/css" href="./desgin.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+
+<h1>Update Section</h1>
+<button onclick="redirectToHome()">Home</button>
+<button onclick="redirectToAllSections()">All Sections</button>
+
+<div id="app">
+  <form v-on:submit.prevent="updateSection">
+    <label for="sectionName">Name</label>
+    <input type="text" id="sectionName" required v-model="sectionName">
+    <label for="sectionDescription">Description</label>
+    <input type="text" id="sectionDescription" required v-model="sectionDescription">
+    <button type="submit">Update Section</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        sectionId: null,
+        sectionName: '',
+        sectionDescription: ''
+      }
+    },
+    mounted() {
+      const params = new URLSearchParams(window.location.search);
+      this.sectionId = params.get('id');
+      this.fetchSectionDetails();
+    },
+    methods: {
+      async fetchSectionDetails() {
+        try {
+          const response = await fetch('/section/'+this.sectionId);
+          const data = await response.json();
+          const sectionDetails = data.section_details;
+          this.sectionName = data.name;
+          this.sectionDescription = data.description;
+        } catch (error) {
+          console.error('Error fetching section details:', error);
+        }
+      },
+      async updateSection() {
+        try {
+          const response = await fetch(`/section/${this.sectionId}/update`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: this.sectionName,
+              description: this.sectionDescription
+            })
+          });
+          if (response.ok) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Successfully Updated',
+            }).then(() => {
+              window.location.href = './librarian_homepage.html';
+            });
+          } else {
+            console.error('Failed to update section');
+            Swal.fire({
+              icon: 'error',
+              title: 'Error While Updating',
+            });
+          }
+        } catch (error) {
+          console.error('Error updating section:', error);
+          Swal.fire({
+            icon: "error",
+            title: "Error while Updating",
+          });
+        }
+      }
+    }
+  });
+
+  app.mount('#app');
+
+  function redirectToHome() {
+    window.location.href = "./librarian_homepage.html";
+  }
+
+  function redirectToAllSections() {
+    window.location.href = "./librarian_homepage.html";
+  }
+</script>
+
+</body>
+</html>

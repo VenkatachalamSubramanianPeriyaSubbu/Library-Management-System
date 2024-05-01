@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Orders-Librarian</title>
+    <button onclick="redirectToHome()">Home</button>
+    <script src="https://unpkg.com/vue@2"></script>
+    <link rel="stylesheet" type="text/css" href="./desgin.css">
+
+    <!-- Component template -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/x-template" id="grid-template">
+        <table>
+            <thead>
+            <tr>
+                <th v-for="key in columns"
+                    @click="sortBy(key)"
+                    :class="{ active: sortKey == key }">
+                    {{ key | capitalize }}
+                    <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'">
+                    </span>
+                </th>
+                <th>Actions</th> <!-- New column for buttons -->
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="entry in filteredHeroes">
+                <td v-for="key in columns">
+                    <!-- Make book name clickable and redirect to another page -->
+                    <template v-if="key === 'title'">
+                        <a :href="'./book_details.html?id=' + entry.id">{{ entry[key] }}</a>
+                    </template>
+                    <template v-else>
+                        {{ entry[key] }}
+                    </template>
+                </td>
+                <td>
+                    <!-- Button to revoke access if the book is not returned -->
+                    <button v-if="entry.return_date === 'Not Returned'" @click="revokeAccess(entry)">Revoke Access</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </script>
+</head>
+<body>
+<!-- demo root element -->
+<div id="demo">
+    <form id="search">
+        Search <input name="query" v-model="searchQuery" />
+    </form>
+    <demo-grid
+        :heroes="gridData"
+        :columns="gridColumns"
+        :filter-key="searchQuery"
+    >
+    </demo-grid>
+</div>
+
+<script>
+    // register the grid component
+    Vue.component("demo-grid", {
+        template: "#grid-template",
+        props: {
+            heroes: Array,
+            columns: Array,
+            filterKey: String
+        },
+        data: function() {
+            var sortOrders = {};
+            this.columns.forEach(function(key) {
+                sortOrders[key] = 1;
+            });
+            return {
+                sortKey: "",
+                sortOrders: sortOrders
+            };
+        },
+        computed: {
+            filteredHeroes: function() {
+                var sortKey = this.sortKey;
+                var filterKey = this.filterKey && this.filterKey.toLowerCase();
+                var order = this.sortOrders[sortKey] || 1;
+                var heroes = this.heroes;
+                if (filterKey) {
+                    heroes = heroes.filter(function(row) {
+                        return Object.keys(row).some(function(key) {
+                            return (
+                                String(row[key])
+                                    .toLowerCase()
+                                    .indexOf(filterKey) > -1
+                            );
+                        });
+                    });
+                }
+                if (sortKey) {
+                    heroes = heroes.slice().sort(function(a, b) {
+                        a = a[sortKey];
+                        b = b[sortKey];
+                        return (a === b ? 0 : a > b ? 1 : -1) * order;
+                    });
+                }
+                return heroes;
+            }
+        },
+        filters: {
+            capitalize: function(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+        },
+        methods: {
+            sortBy: function(key) {
+                this.sortKey = key;
+                this.sortOrders[key] = this.sortOrders[key] * -1;
+            },
+            revokeAccess: function(entry) {
+                // Send a request to update the status of the book to "Revoked"
+                fetch("/orderdetails/" + entry.transaction_id + "/update", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "return_date": "Revoked"
+                    })
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            // If the update is successful, refresh the data
+                            fetch("/orderdetails", {
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    this.gridData = data.alltransaction;
+                                    Swal.fire({
+                                        title: "Revoked!",
+                                        icon: "success",
+                                    })
+                                    window.location.href = './librarian_homepage.html';
+                                })
+                                .catch(error => {
+                                    console.error("Error fetching data:", error);
+                                    Swal.fire({
+                                        title: "Error",
+                                        icon: "error",
+                                    })
+                                });
+                        } else {
+                            console.error("Failed to revoke access:", response.statusText);
+                            Swal.fire({
+                                title: "Error",
+                                icon: "error",
+                            })
+                            // Handle failure to revoke access appropriately
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error revoking access:", error);
+                        Swal.fire({
+                            title: "Error",
+                            icon: "error",
+                        })
+                        // Handle error appropriately
+                    });
+            }
+        }
+    });
+
+    // bootstrap the demo
+    fetch("/orderdetails", {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(async function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch data');
+        }
+        data = await response.json();
+        var demo = new Vue({
+            el: "#demo",
+            data: {
+                searchQuery: "",
+                gridColumns: [ "transaction_id", "book_id", "member","issued_date", "return_date", "due_date","overdue"],// shuffle order
+                gridData: data.alltransaction
+            }
+        });
+    }).catch(function(error) {
+        console.error('Error fetching data:', error);
+        // Handle error appropriately, e.g., show an error message to the user
+    });
+
+    function redirectToHome(){
+        window.location.href = "./librarian_homepage.html";
+    }
+</script>
+</body>
+</html>
