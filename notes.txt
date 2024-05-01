@@ -1,0 +1,59 @@
+# Set up SMTP server details
+smtp_server = 'your_smtp_server_address'
+smtp_port = 587  # Default port for secure connections (TLS)
+smtp_username = 'your_smtp_username'
+smtp_password = 'your_smtp_password'
+
+# Create an SMTP session
+server = smtplib.SMTP(smtp_server, smtp_port)
+
+# Start TLS encryption (secure connection)
+server.starttls()
+
+# Login to the SMTP server
+server.login(smtp_username, smtp_password)
+
+# Send email(s) using the SMTP server
+# (Code for sending emails goes here)
+
+# Close the SMTP session
+server.quit()
+
+
+path is "C:/Users/subbu/AppData/Local/Microsoft/WindowsApps/python3.11"
+
+
+
+
+    reminder_message = "Hi there! Don't forget to visit our app today."
+    msg = MIMEText(reminder_message)
+    msg['Subject'] = 'Reminder: Visit Our App'
+    msg['From'] = 'vs.projectdevelopment@gmail.com'
+    msg['To'] = 'vs.projectdevelopment@gmail.com'
+
+    # Connect to the SMTP server and send the email
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+    
+        smtp.login('vs.projectdevelopment', 'hyvq ijnb wmma ohjg')
+        smtp.send_message(msg)
+
+gradwings. 
+
+      async fetchBookDetails() {
+        try {
+          // const response = await fetch("/book/"+this.bookId+"/update");
+          const data = await response.json();
+          const bookDetails = data.book_details;
+          // Set the data properties with the fetched book details
+          this.bookTitle = bookDetails.title;
+          this.bookAuthor = bookDetails.author;
+          this.bookISBN = bookDetails.isbn;
+          this.bookSecID = bookDetails.section_id;
+          this.bookPublYear = bookDetails.publication_year;
+          this.bookRating = bookDetails.rating;
+          this.bookVolume = bookDetails.volume;
+          this.bookPages = bookDetails.pages;
+        } catch (error) {
+          console.error('Error fetching book details:', error);
+        }
+      },
